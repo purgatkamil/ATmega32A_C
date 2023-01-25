@@ -51,7 +51,7 @@ char ch;
 
 do{
   ch = USART_GetChar();
-  USART_PutChar(ch);
+  //USART_PutChar(ch);
   *s++ = ch;
   if(ch == 0x0D) *s = 0;
 }while(ch != 0x0D);
