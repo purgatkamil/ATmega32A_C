@@ -68,6 +68,7 @@ void adc_read(){
 }
 
 void setTime(int Hours, int Minutes, int Seconds){
+	// Decimal to BCD conversion
 	int OnesHours = Hours % 10;
 	int TensHours =  (Hours - OnesHours) / 10;
 	int ResultHours = 0;
@@ -88,9 +89,9 @@ void setTime(int Hours, int Minutes, int Seconds){
 	
 	TWI_Start();                        // start transmission
 	TWI_Write(0xD0);                    // write addres of M41T00
-	TWI_Write(0x00);                    // select hours register                                           // write address for reading data
-	TWI_Write(ResultSeconds);			// read hours register
-	TWI_Write(ResultMinutes);			// read hours register                                        // write address for reading data
+	TWI_Write(0x00);                    // select seconds register                                           
+	TWI_Write(ResultSeconds);			// read seconds register
+	TWI_Write(ResultMinutes);			// read minutes register                                        
 	TWI_Write(ResultHours);				// read hours register
 	TWI_Stop();							// stop transmission 
 }
@@ -98,11 +99,11 @@ void setTime(int Hours, int Minutes, int Seconds){
 void getTime(int *hr,int *min,int *sec){
 	TWI_Start();                        // start transmission
 	TWI_Write(0xD0);                    // write addres of M41T00
-	TWI_Write(0x00);                    // select hours registers
+	TWI_Write(0x00);                    // select seconds registers
 	TWI_Start();                        // repeated start
 	TWI_Write(0xD1);                    // write address for reading data
-	*sec = TWI_Read(ACK);                // read hours register                   // write address for reading data
-	*min = TWI_Read(ACK);                // read hours register                  // write address for reading data
+	*sec = TWI_Read(ACK);                // read seconds register                   
+	*min = TWI_Read(ACK);                // read minutes register                  
 	*hr= TWI_Read(NACK);                // read hours register
 	TWI_Stop();                         // stop transmission
 	
@@ -208,8 +209,8 @@ void displayData(int DisplayMode, int x, int y){
 		
 		case 3:
 				
-				B2 = ((Hours>>4)&7);     // convert seconds to ASCII char
-				B3 = (Hours&15);         // convert seconds to ASCII char
+				B2 = ((Hours>>4)&7);     // convert hours to ASCII char
+				B3 = (Hours&15);         // convert hours to ASCII char
 				itoa(B2, TimeString, 10);
 				LCD_GoTo(x, y);
 				LCD_WriteData(TimeString[0]);
@@ -226,8 +227,8 @@ void displayData(int DisplayMode, int x, int y){
 				LCD_WriteText(":");
 				uartAddToTxBuffer(':');
 
-				B2 = ((Minutes>>4)&7);     // convert seconds to ASCII char
-				B3 = (Minutes&15);         // convert seconds to ASCII char
+				B2 = ((Minutes>>4)&7);     // convert minutes to ASCII char
+				B3 = (Minutes&15);         // convert minutes to ASCII char
 				itoa(B2, TimeString, 20);
 				LCD_GoTo(x+3, y);
 				LCD_WriteData(TimeString[0]);
@@ -257,6 +258,7 @@ void displayData(int DisplayMode, int x, int y){
 	}
 }
 
+//changing DisplayMode with button press
 void checkBtn(){
 	if (!(PINB & 1)){
 		if(PreviousState == 0){
@@ -297,9 +299,9 @@ void USART_Receiving(){
 			cli();	
 			USART_GetString(&Time);
 			sei();
-			int hours = ((Time[0] - 48) * 10) + (Time[1] - 48);		
-			int minutes = ((Time[2] - 48) * 10) + (Time[3] - 48);
-			int seconds = ((Time[4] - 48) * 10) + (Time[5] - 48);
+			int hours = ((Time[0] - 48) * 10) + (Time[1] - 48);		//converting hours 
+			int minutes = ((Time[2] - 48) * 10) + (Time[3] - 48);	//convrting minutes
+			int seconds = ((Time[4] - 48) * 10) + (Time[5] - 48);	//converting seconds
 			if((hours > 23) || minutes > 59 || seconds > 59){
 				USART_PutString("Wrong time format\r");	
 				DisplayMode = 3;
@@ -347,7 +349,7 @@ wdt_enable(7);
 sei();
 
 while(1){
-	while(UBuffer->dataptr[UBuffer->datalength - 1] != 13){
+	while(UBuffer->dataptr[UBuffer->datalength - 1] != 13){		//checking if input has ended with enter
 		sleep_cpu();	
 	}
 	USART_Receiving();
